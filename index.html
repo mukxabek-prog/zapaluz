@@ -6,7 +6,6 @@
 <title>Xotiralar — shaxsiy albom</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   :root{
     --bg-deep:#211c2e;
@@ -82,6 +81,15 @@
   .primary-btn:disabled{ opacity:.35; cursor:not-allowed; box-shadow:0 6px 0 rgba(0,0,0,0.15); }
   .primary-btn:not(:disabled):hover{ transform:translateY(-2px); }
   .primary-btn:not(:disabled):active{ transform:translateY(2px); box-shadow:0 2px 0 var(--gold-dark); }
+
+  .chat-btn{
+    display:block; margin-top:12px; padding:13px 18px; border-radius:14px;
+    background:#3ecf8e; color:#06281c; font-weight:800; font-size:15px;
+    text-align:center; text-decoration:none; box-shadow:0 6px 0 #2a9d6c;
+    transition: transform .12s;
+  }
+  .chat-btn:hover{ transform:translateY(-2px); }
+  .chat-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #2a9d6c; }
 
   .sticker-grid{
     display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin:8px 0 4px;
@@ -273,6 +281,7 @@
       <p class="board-sub">Xotiralar albomiga kirish uchun ismingizni yozing</p>
       <input class="name-input" id="nameInput" type="text" placeholder="Masalan: Dilnoza" maxlength="24" autocomplete="off">
       <button class="primary-btn" id="toStep2" disabled>Davom etish →</button>
+      <a class="chat-btn" href="https://t.me/+w5-VMxGGhwU3ZThi" target="_blank" rel="noopener">💬 Chatga o'tish</a>
     </div>
 
     <div class="step" id="step-avatar">
@@ -371,21 +380,6 @@
   "use strict";
 
   /* ---------------- CONFIG ---------------- */
-  // 1) Supabase.com'da bepul akkount va loyiha oching (karta kerak emas)
-  // 2) Project Settings -> API dan "Project URL" va "anon public" kalitni shu yerga qo'ying
-  var SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
-  var SUPABASE_ANON_KEY = "YOUR-ANON-PUBLIC-KEY";
-  var MEDIA_BUCKET = "media";
-  var MEDIA_TABLE = "media_items";
-
-  var supabaseClient = null;
-  function getClient(){
-    if(!supabaseClient){
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    }
-    return supabaseClient;
-  }
-
   var AVATARS = ["😀","😎","🥳","🐱","🐶","🦊","🐻","🦄","🌟","🍩","🎨","🚀"];
   var MOODS = [
     {key:"jahldor",  label:"Jahldor",  emoji:"😠"},
@@ -402,65 +396,59 @@
   var searchQuery = "";
   var pendingFiles = [];
   var selectedMood = null;
+  var activeObjectUrls = [];
   var currentLightboxId = null;
 
-  /* ---------------- SUPABASE STORAGE LAYER ---------------- */
-  // Fayllar Supabase Storage'ga, ma'lumotlar (kim, kayfiyat...) media_items jadvaliga yoziladi.
-  // Shu sababli barcha qurilmalardan bir xil xotiralar ko'rinadi.
-  function addMediaItems(items){
-    var client = getClient();
-    var uploads = items.map(function(item){
-      var path = Date.now() + "-" + Math.random().toString(36).slice(2) + "-" + item.fileName;
-      return client.storage.from(MEDIA_BUCKET).upload(path, item.blob, {contentType: item.mimeType})
-        .then(function(res){
-          if(res.error) throw res.error;
-          return client.from(MEDIA_TABLE).insert({
-            owner: item.owner,
-            mood: item.mood,
-            type: item.type,
-            file_path: path,
-            file_name: item.fileName,
-            added_at: item.addedAt
-          });
-        })
-        .then(function(res){
-          if(res && res.error) throw res.error;
-        });
+  /* ---------------- INDEXEDDB ---------------- */
+  var dbPromise = null;
+  function openDB(){
+    if(dbPromise) return dbPromise;
+    dbPromise = new Promise(function(resolve, reject){
+      var req = indexedDB.open("xotiralarDB", 1);
+      req.onupgradeneeded = function(e){
+        var db = e.target.result;
+        if(!db.objectStoreNames.contains("media")){
+          var store = db.createObjectStore("media", {keyPath:"id", autoIncrement:true});
+          store.createIndex("owner", "owner", {unique:false});
+          store.createIndex("type", "type", {unique:false});
+        }
+      };
+      req.onsuccess = function(e){ resolve(e.target.result); };
+      req.onerror = function(e){ reject(e); };
     });
-    return Promise.all(uploads);
+    return dbPromise;
   }
-
+  function addMediaItems(items){
+    return openDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction("media", "readwrite");
+        var store = tx.objectStore("media");
+        items.forEach(function(item){ store.add(item); });
+        tx.oncomplete = function(){ resolve(); };
+        tx.onerror = function(e){ reject(e); };
+      });
+    });
+  }
   function getAllMedia(){
-    var client = getClient();
-    return client.from(MEDIA_TABLE).select("*").order("added_at", {ascending:false})
-      .then(function(res){
-        if(res.error) throw res.error;
-        return (res.data || []).map(function(row){
-          var pub = client.storage.from(MEDIA_BUCKET).getPublicUrl(row.file_path);
-          return {
-            id: row.id,
-            owner: row.owner,
-            mood: row.mood,
-            type: row.type,
-            fileName: row.file_name,
-            filePath: row.file_path,
-            addedAt: row.added_at,
-            url: pub.data.publicUrl
-          };
-        });
+    return openDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction("media", "readonly");
+        var store = tx.objectStore("media");
+        var req = store.getAll();
+        req.onsuccess = function(){ resolve(req.result || []); };
+        req.onerror = function(e){ reject(e); };
       });
+    });
   }
-
   function deleteMediaItem(id){
-    var client = getClient();
-    return client.from(MEDIA_TABLE).select("file_path").eq("id", id).single()
-      .then(function(res){
-        if(res.error) throw res.error;
-        return client.storage.from(MEDIA_BUCKET).remove([res.data.file_path]);
-      })
-      .then(function(){
-        return client.from(MEDIA_TABLE).delete().eq("id", id);
+    return openDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction("media", "readwrite");
+        tx.objectStore("media").delete(id);
+        tx.oncomplete = function(){ resolve(); };
+        tx.onerror = function(e){ reject(e); };
       });
+    });
   }
 
   /* ---------------- HELPERS ---------------- */
@@ -477,6 +465,10 @@
   function rotationForId(id){
     var n = (id * 37) % 11; // deterministic pseudo-random -5..5
     return (n - 5) + "deg";
+  }
+  function revokeAllUrls(){
+    activeObjectUrls.forEach(function(u){ URL.revokeObjectURL(u); });
+    activeObjectUrls = [];
   }
   function escapeHtml(str){
     return String(str).replace(/[&<>"']/g, function(c){
@@ -564,9 +556,10 @@
 
   /* ---------------- GALLERY RENDER ---------------- */
   function renderGallery(){
-    var grid = document.getElementById("galleryGrid");
-    var empty = document.getElementById("emptyState");
     getAllMedia().then(function(items){
+      revokeAllUrls();
+      var grid = document.getElementById("galleryGrid");
+      var empty = document.getElementById("emptyState");
       grid.innerHTML = "";
 
       var filtered = items.filter(function(it){
@@ -574,6 +567,7 @@
         var searchOk = !searchQuery || (it.owner || "").toLowerCase().indexOf(searchQuery) !== -1;
         return typeOk && searchOk;
       });
+      filtered.sort(function(a,b){ return b.addedAt - a.addedAt; });
 
       if(filtered.length === 0){
         empty.hidden = false;
@@ -584,16 +578,12 @@
       filtered.forEach(function(item){
         grid.appendChild(buildCard(item));
       });
-    }).catch(function(err){
-      grid.innerHTML = "";
-      empty.hidden = false;
-      empty.querySelector("h2").textContent = "Ulanishda xatolik";
-      empty.querySelector("p").textContent = "Sozlamalarni (SUPABASE_URL / KEY) tekshiring: " + (err && err.message ? err.message : err);
     });
   }
 
   function buildCard(item){
-    var url = item.url;
+    var url = URL.createObjectURL(item.blob);
+    activeObjectUrls.push(url);
     var mood = moodByKey(item.mood);
 
     var card = document.createElement("div");
@@ -642,19 +632,12 @@
   }
 
   function downloadItem(item, url){
-    fetch(url).then(function(res){ return res.blob(); }).then(function(blob){
-      var objUrl = URL.createObjectURL(blob);
-      var a = document.createElement("a");
-      a.href = objUrl;
-      a.download = item.fileName || ("xotira-" + item.id);
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(function(){ URL.revokeObjectURL(objUrl); }, 4000);
-    }).catch(function(){
-      // Fallback: to'g'ridan-to'g'ri havolani ochish
-      window.open(url, "_blank");
-    });
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = item.fileName || ("xotira-" + item.id);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   /* ---------------- LIGHTBOX ---------------- */
