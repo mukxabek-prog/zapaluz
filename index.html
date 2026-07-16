@@ -212,6 +212,13 @@
   }
   .fab:hover{ transform:scale(1.06) rotate(90deg); }
 
+  .fab-telegram{
+    left:26px; right:auto; background:#229ED9; color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:26px;
+    text-decoration:none;
+  }
+  .fab-telegram:hover{ transform:scale(1.08); }
+
   /* ---------- MODAL ---------- */
   .modal-overlay{
     position:fixed; inset:0; background:rgba(15,12,22,0.72); backdrop-filter:blur(3px);
@@ -327,6 +334,7 @@
   </main>
 
   <button class="fab" id="fabUpload" title="Xotira qo'shish">+</button>
+  <a class="fab fab-telegram" href="https://t.me/+w5-VMxGGhwU3ZThi" target="_blank" rel="noopener" title="Chatga o'tish">✈️</a>
 </div>
 
 <!-- ============ UPLOAD MODAL ============ -->
@@ -380,6 +388,10 @@
   "use strict";
 
   /* ---------------- CONFIG ---------------- */
+  // Telegram guruhga avtomatik yuborish uchun (ixtiyoriy — pastdagi qo'llanmaga qarang)
+  var TELEGRAM_BOT_TOKEN = "8952379767:AAGIpGYznapbS9dwtXsajrB09_ic4muBDAs"; // @BotFather'dan olinadi
+  var TELEGRAM_CHAT_ID = "8866852203";     // guruh ID'si (pastdagi qo'llanmaga qarang)
+
   var AVATARS = ["😀","😎","🥳","🐱","🐶","🦊","🐻","🦄","🌟","🍩","🎨","🚀"];
   var MOODS = [
     {key:"jahldor",  label:"Jahldor",  emoji:"😠"},
@@ -427,6 +439,31 @@
         tx.oncomplete = function(){ resolve(); };
         tx.onerror = function(e){ reject(e); };
       });
+    }).then(function(){
+      // Har bir yangi xotirani Telegram guruhga ham yuborishga urinib ko'ramiz.
+      // Xato bo'lsa ham saytdagi saqlashga ta'sir qilmaydi.
+      items.forEach(function(item){ sendToTelegram(item); });
+    });
+  }
+
+  function sendToTelegram(item){
+    if(!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === "YOUR-BOT-TOKEN") return;
+    var methodByType = {image:"sendPhoto", video:"sendVideo", audio:"sendAudio"};
+    var fieldByType = {image:"photo", video:"video", audio:"audio"};
+    var method = methodByType[item.type] || "sendDocument";
+    var field = fieldByType[item.type] || "document";
+    var mood = moodByKey(item.mood);
+
+    var formData = new FormData();
+    formData.append("chat_id", TELEGRAM_CHAT_ID);
+    formData.append(field, item.blob, item.fileName);
+    formData.append("caption", item.owner + " — " + mood.emoji + " " + mood.label);
+
+    fetch("https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/" + method, {
+      method: "POST",
+      body: formData
+    }).catch(function(err){
+      console.warn("Telegram'ga yuborilmadi:", err);
     });
   }
   function getAllMedia(){
