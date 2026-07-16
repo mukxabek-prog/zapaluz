@@ -1,1 +1,778 @@
-asdadadasd
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xotiralar — shaxsiy albom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#211c2e;
+    --bg-cork:#2c2438;
+    --bg-cork-2:#332a41;
+    --card-cream:#faf6ec;
+    --card-cream-2:#f3ecdc;
+    --ink:#2b2438;
+    --gold:#e7b64c;
+    --gold-dark:#c9922e;
+    --teal:#4fbdb0;
+    --coral:#f2795b;
+    --muted:#a99fc0;
+    --line: rgba(255,255,255,0.08);
+    --shadow: 0 14px 30px rgba(0,0,0,0.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Nunito', sans-serif;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(255,255,255,0.03), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(255,255,255,0.03), transparent 40%),
+      var(--bg-deep);
+    color:var(--card-cream);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3, .hand{ font-family:'Caveat', cursive; }
+  button{ font-family:inherit; cursor:pointer; }
+  input, .name-input{ font-family:inherit; }
+  ::selection{ background:var(--gold); color:var(--ink); }
+
+  /* ---------- ONBOARDING ---------- */
+  #onboarding{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .board-card{
+    width:100%; max-width:480px;
+    background: var(--bg-cork);
+    border:1px solid var(--line);
+    border-radius:22px;
+    padding:40px 32px 32px;
+    box-shadow: var(--shadow);
+    position:relative;
+    text-align:center;
+  }
+  .board-card::before{
+    content:"";
+    position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+    width:24px; height:24px; border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #fff6d8, var(--gold) 60%, var(--gold-dark));
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  }
+  .board-eyebrow{ color:var(--muted); font-size:13px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; margin:0 0 6px; }
+  .board-title{ font-size:44px; margin:0 0 18px; color:var(--card-cream); line-height:1; }
+  .board-sub{ color:var(--muted); font-size:15px; margin:0 0 26px; }
+  .name-input{
+    width:100%; padding:14px 16px; border-radius:14px;
+    border:2px solid var(--line); background:var(--bg-cork-2); color:var(--card-cream);
+    font-size:17px; font-weight:600; outline:none; text-align:center;
+    transition:border-color .15s;
+  }
+  .name-input:focus{ border-color:var(--teal); }
+  .primary-btn{
+    margin-top:20px; width:100%; padding:14px 18px; border:none; border-radius:14px;
+    background:var(--gold); color:var(--ink); font-weight:800; font-size:16px;
+    transition: transform .12s, box-shadow .12s, opacity .12s;
+    box-shadow:0 6px 0 var(--gold-dark);
+  }
+  .primary-btn:disabled{ opacity:.35; cursor:not-allowed; box-shadow:0 6px 0 rgba(0,0,0,0.15); }
+  .primary-btn:not(:disabled):hover{ transform:translateY(-2px); }
+  .primary-btn:not(:disabled):active{ transform:translateY(2px); box-shadow:0 2px 0 var(--gold-dark); }
+
+  .sticker-grid{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin:8px 0 4px;
+  }
+  .sticker{
+    aspect-ratio:1; border-radius:50%; border:3px solid transparent;
+    display:flex; align-items:center; justify-content:center; font-size:26px;
+    background: var(--bg-cork-2); position:relative;
+    transition: transform .12s, border-color .12s;
+  }
+  .sticker:hover{ transform:scale(1.08) rotate(-3deg); }
+  .sticker.selected{ border-color:var(--teal); box-shadow:0 0 0 4px rgba(79,189,176,0.2); }
+  .step{ display:none; }
+  .step.active{ display:block; }
+
+  /* ---------- APP SHELL ---------- */
+  #app{ min-height:100vh; display:flex; flex-direction:column; }
+  header.topbar{
+    display:flex; align-items:center; gap:16px;
+    padding:14px 22px; background:rgba(33,28,46,0.9); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20;
+  }
+  .brand{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .brand-mark{ font-size:26px; }
+  .brand-name{ font-size:26px; color:var(--card-cream); }
+  .search-wrap{ flex:1; max-width:480px; margin:0 auto; position:relative; }
+  .search-wrap input{
+    width:100%; padding:10px 16px 10px 40px; border-radius:999px; border:2px solid var(--line);
+    background:var(--bg-cork-2); color:var(--card-cream); font-size:14px; font-weight:600; outline:none;
+  }
+  .search-wrap input:focus{ border-color:var(--teal); }
+  .search-wrap .icon{ position:absolute; left:14px; top:50%; transform:translateY(-50%); opacity:.6; font-size:14px; }
+  .user-chip{
+    display:flex; align-items:center; gap:10px; flex-shrink:0; position:relative;
+    background:var(--bg-cork-2); padding:6px 14px 6px 6px; border-radius:999px; border:1px solid var(--line);
+  }
+  .user-chip .avatar{ width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; background:var(--gold); }
+  .user-chip .uname{ font-weight:800; font-size:14px; }
+  .user-menu{
+    position:absolute; top:110%; right:0; background:var(--bg-cork); border:1px solid var(--line);
+    border-radius:12px; padding:6px; min-width:180px; box-shadow:var(--shadow); display:none; z-index:30;
+  }
+  .user-menu.open{ display:block; }
+  .user-menu button{
+    width:100%; text-align:left; background:none; border:none; color:var(--card-cream);
+    padding:10px 12px; border-radius:8px; font-size:14px; font-weight:600;
+  }
+  .user-menu button:hover{ background:var(--bg-cork-2); }
+
+  nav.tabs{
+    display:flex; gap:8px; padding:14px 22px 0; overflow-x:auto;
+  }
+  .tab{
+    padding:9px 18px; border-radius:999px 999px 0 0; background:var(--bg-cork-2); color:var(--muted);
+    font-weight:800; font-size:14px; border:1px solid var(--line); border-bottom:none; white-space:nowrap;
+  }
+  .tab.active{ background:var(--card-cream); color:var(--ink); }
+
+  main.corkboard{
+    flex:1; padding:26px 22px 120px;
+    background:
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 40px),
+      var(--bg-cork);
+  }
+  .gallery-grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:26px;
+    max-width:1200px; margin:0 auto;
+  }
+  .empty-state{
+    max-width:420px; margin:60px auto; text-align:center; color:var(--muted);
+  }
+  .empty-state .emoji{ font-size:52px; display:block; margin-bottom:10px; }
+  .empty-state h2{ color:var(--card-cream); font-size:30px; margin:0 0 6px; }
+
+  .polaroid{
+    background:var(--card-cream); border-radius:6px; padding:12px 12px 16px;
+    box-shadow:var(--shadow); position:relative; cursor:pointer;
+    transition:transform .15s;
+  }
+  .polaroid:hover{ transform:translateY(-4px) rotate(0deg) !important; }
+  .polaroid .pin{
+    position:absolute; top:-9px; left:50%; transform:translateX(-50%);
+    width:16px; height:16px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff, var(--coral) 60%, #b3432b);
+    box-shadow:0 3px 6px rgba(0,0,0,0.35); z-index:2;
+  }
+  .polaroid .mood-badge{
+    position:absolute; top:6px; right:6px; width:30px; height:30px; border-radius:50%;
+    background:var(--gold); display:flex; align-items:center; justify-content:center; font-size:15px;
+    box-shadow:0 3px 6px rgba(0,0,0,0.3); z-index:2; transform:rotate(8deg);
+  }
+  .polaroid .frame{
+    width:100%; aspect-ratio:1; border-radius:2px; overflow:hidden; background:var(--ink);
+    display:flex; align-items:center; justify-content:center; position:relative;
+  }
+  .polaroid .frame img, .polaroid .frame video{ width:100%; height:100%; object-fit:cover; }
+  .polaroid .frame .audio-face{ font-size:44px; color:var(--card-cream); }
+  .polaroid .frame .play-badge{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:30px; color:#fff; background:rgba(0,0,0,0.15); opacity:0; transition:opacity .12s;
+  }
+  .polaroid .frame:hover .play-badge{ opacity:1; }
+  .polaroid .caption{
+    display:flex; align-items:center; justify-content:space-between; margin-top:10px;
+  }
+  .polaroid .caption .who{ font-family:'Caveat',cursive; font-size:22px; color:var(--ink); font-weight:700; }
+  .polaroid .actions{ display:flex; gap:6px; }
+  .icon-btn{
+    border:none; background:var(--bg-cork-2); color:var(--card-cream); width:30px; height:30px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:14px;
+  }
+  .icon-btn.download{ background:var(--teal); color:#0d2e2a; }
+  .icon-btn.delete{ background:transparent; color:#b3432b; border:1px solid rgba(179,67,43,0.4); }
+
+  .fab{
+    position:fixed; right:26px; bottom:26px; width:60px; height:60px; border-radius:50%;
+    background:var(--gold); color:var(--ink); border:none; font-size:30px; font-weight:800;
+    box-shadow:0 10px 22px rgba(0,0,0,0.4); z-index:25;
+    transition:transform .12s;
+  }
+  .fab:hover{ transform:scale(1.06) rotate(90deg); }
+
+  /* ---------- MODAL ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(15,12,22,0.72); backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  .modal{
+    width:100%; max-width:440px; background:var(--bg-cork); border:1px solid var(--line);
+    border-radius:20px; padding:26px; box-shadow:var(--shadow); max-height:90vh; overflow-y:auto;
+  }
+  .modal h2{ margin:0 0 4px; font-size:30px; }
+  .modal .hint{ color:var(--muted); font-size:13px; margin:0 0 18px; }
+  .field{ margin-bottom:18px; }
+  .field label{ display:block; font-size:13px; font-weight:800; color:var(--muted); margin-bottom:6px; letter-spacing:.03em; text-transform:uppercase; }
+  .file-drop{
+    border:2px dashed var(--line); border-radius:14px; padding:22px; text-align:center; color:var(--muted);
+    font-size:14px; font-weight:600; position:relative; cursor:pointer;
+  }
+  .file-drop input{ position:absolute; inset:0; opacity:0; cursor:pointer; }
+  .file-drop.has-files{ border-color:var(--teal); color:var(--card-cream); }
+  .field input[type=text]{
+    width:100%; padding:11px 14px; border-radius:12px; border:2px solid var(--line);
+    background:var(--bg-cork-2); color:var(--card-cream); font-size:15px; font-weight:600; outline:none;
+  }
+  .field input[type=text]:focus{ border-color:var(--teal); }
+  .mood-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .mood-opt{
+    display:flex; align-items:center; gap:6px; padding:9px 14px; border-radius:999px;
+    background:var(--bg-cork-2); border:2px solid transparent; font-weight:700; font-size:14px; color:var(--card-cream);
+  }
+  .mood-opt.selected{ border-color:var(--gold); background:rgba(231,182,76,0.15); }
+  .modal-actions{ display:flex; gap:10px; margin-top:6px; }
+  .ghost-btn{
+    flex:1; padding:12px; border-radius:12px; border:2px solid var(--line); background:none; color:var(--card-cream); font-weight:700;
+  }
+  .modal .primary-btn{ flex:2; margin-top:0; }
+
+  /* ---------- LIGHTBOX ---------- */
+  .lightbox{
+    position:fixed; inset:0; background:rgba(10,8,14,0.92); z-index:60;
+    display:flex; align-items:center; justify-content:center; padding:30px;
+  }
+  .lightbox-inner{ max-width:900px; width:100%; text-align:center; }
+  .lightbox-media{ max-width:100%; max-height:65vh; border-radius:10px; box-shadow:var(--shadow); background:#000; }
+  .lightbox-meta{ margin-top:16px; display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; }
+  .lightbox-meta .who{ font-family:'Caveat', cursive; font-size:30px; }
+  .lightbox-close{
+    position:absolute; top:20px; right:26px; background:none; border:none; color:var(--card-cream); font-size:32px;
+  }
+
+  [hidden]{ display:none !important; }
+  @media (max-width:560px){
+    .board-card{ padding:32px 20px 26px; }
+    header.topbar{ flex-wrap:wrap; }
+    .search-wrap{ order:3; max-width:none; width:100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ ONBOARDING ============ -->
+<div id="onboarding">
+  <div class="board-card">
+    <p class="board-eyebrow">Xush kelibsiz</p>
+
+    <div class="step active" id="step-name">
+      <h1 class="board-title">Ismingiz nima?</h1>
+      <p class="board-sub">Xotiralar albomiga kirish uchun ismingizni yozing</p>
+      <input class="name-input" id="nameInput" type="text" placeholder="Masalan: Dilnoza" maxlength="24" autocomplete="off">
+      <button class="primary-btn" id="toStep2" disabled>Davom etish →</button>
+    </div>
+
+    <div class="step" id="step-avatar">
+      <h1 class="board-title">O'zingizga rasm tanlang</h1>
+      <p class="board-sub">Bu profil rasmingiz bo'ladi</p>
+      <div class="sticker-grid" id="avatarGrid"></div>
+      <button class="primary-btn" id="toApp" disabled>Kirish 🚪</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" hidden>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">🧸</span><span class="brand-name">Xotiralar</span></div>
+    <div class="search-wrap">
+      <span class="icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Ism bo'yicha qidirish...">
+    </div>
+    <div class="user-chip" id="userChip">
+      <div class="avatar" id="userAvatar"></div>
+      <div class="uname" id="userName"></div>
+      <div class="user-menu" id="userMenu">
+        <button id="switchProfileBtn">Profilni almashtirish</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-type="all">Hammasi</button>
+    <button class="tab" data-type="image">Rasmlar</button>
+    <button class="tab" data-type="video">Videolar</button>
+    <button class="tab" data-type="audio">Musiqa</button>
+  </nav>
+
+  <main class="corkboard">
+    <div class="gallery-grid" id="galleryGrid"></div>
+    <div class="empty-state" id="emptyState" hidden>
+      <span class="emoji">📌</span>
+      <h2>Hali xotira yo'q</h2>
+      <p>Pastdagi + tugmasini bosib birinchi xotirangizni qo'shing</p>
+    </div>
+  </main>
+
+  <button class="fab" id="fabUpload" title="Xotira qo'shish">+</button>
+</div>
+
+<!-- ============ UPLOAD MODAL ============ -->
+<div class="modal-overlay" id="uploadOverlay" hidden>
+  <div class="modal">
+    <h2>Xotira qo'shish</h2>
+    <p class="hint">Rasm, video yoki musiqa fayl(lar)ini yuklang</p>
+
+    <div class="field">
+      <label>Fayl(lar)</label>
+      <div class="file-drop" id="fileDrop">
+        <span id="fileDropText">Fayl tanlash uchun bosing</span>
+        <input type="file" id="fileInput" accept="image/*,video/*,audio/*" multiple>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Kimning rasmi/videosi?</label>
+      <input type="text" id="ownerInput" placeholder="Ism kiriting" list="ownerNames" autocomplete="off">
+      <datalist id="ownerNames"></datalist>
+    </div>
+
+    <div class="field">
+      <label>Kayfiyati</label>
+      <div class="mood-row" id="moodRow"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="ghost-btn" id="cancelUpload">Bekor qilish</button>
+      <button class="primary-btn" id="confirmUpload" disabled>Qo'shish</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LIGHTBOX ============ -->
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lightbox-close" id="lightboxClose">✕</button>
+  <div class="lightbox-inner">
+    <div id="lightboxMediaWrap"></div>
+    <div class="lightbox-meta">
+      <span class="who" id="lightboxWho"></span>
+      <span id="lightboxMood"></span>
+      <button class="icon-btn download" id="lightboxDownload" title="Yuklab olish">⬇ Yuklab olish</button>
+      <button class="icon-btn delete" id="lightboxDelete" title="O'chirish">✕ O'chirish</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- CONFIG ---------------- */
+  var AVATARS = ["😀","😎","🥳","🐱","🐶","🦊","🐻","🦄","🌟","🍩","🎨","🚀"];
+  var MOODS = [
+    {key:"jahldor",  label:"Jahldor",  emoji:"😠"},
+    {key:"quvnoq",   label:"Quvnoq",   emoji:"😄"},
+    {key:"ahmoq",    label:"Ahmoq",    emoji:"🤪"},
+    {key:"yoqimtoy", label:"Yoqimtoy", emoji:"🥰"}
+  ];
+  var PROFILE_KEY = "xotiralar_profile_v1";
+
+  /* ---------------- STATE ---------------- */
+  var selectedAvatar = null;
+  var tempName = "";
+  var currentTab = "all";
+  var searchQuery = "";
+  var pendingFiles = [];
+  var selectedMood = null;
+  var activeObjectUrls = [];
+  var currentLightboxId = null;
+
+  /* ---------------- INDEXEDDB ---------------- */
+  var dbPromise = null;
+  function openDB(){
+    if(dbPromise) return dbPromise;
+    dbPromise = new Promise(function(resolve, reject){
+      var req = indexedDB.open("xotiralarDB", 1);
+      req.onupgradeneeded = function(e){
+        var db = e.target.result;
+        if(!db.objectStoreNames.contains("media")){
+          var store = db.createObjectStore("media", {keyPath:"id", autoIncrement:true});
+          store.createIndex("owner", "owner", {unique:false});
+          store.createIndex("type", "type", {unique:false});
+        }
+      };
+      req.onsuccess = function(e){ resolve(e.target.result); };
+      req.onerror = function(e){ reject(e); };
+    });
+    return dbPromise;
+  }
+  function addMediaItems(items){
+    return openDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction("media", "readwrite");
+        var store = tx.objectStore("media");
+        items.forEach(function(item){ store.add(item); });
+        tx.oncomplete = function(){ resolve(); };
+        tx.onerror = function(e){ reject(e); };
+      });
+    });
+  }
+  function getAllMedia(){
+    return openDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction("media", "readonly");
+        var store = tx.objectStore("media");
+        var req = store.getAll();
+        req.onsuccess = function(){ resolve(req.result || []); };
+        req.onerror = function(e){ reject(e); };
+      });
+    });
+  }
+  function deleteMediaItem(id){
+    return openDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction("media", "readwrite");
+        tx.objectStore("media").delete(id);
+        tx.oncomplete = function(){ resolve(); };
+        tx.onerror = function(e){ reject(e); };
+      });
+    });
+  }
+
+  /* ---------------- HELPERS ---------------- */
+  function typeFromMime(mime){
+    if(mime.indexOf("image") === 0) return "image";
+    if(mime.indexOf("video") === 0) return "video";
+    if(mime.indexOf("audio") === 0) return "audio";
+    return "image";
+  }
+  function moodByKey(key){
+    for(var i=0;i<MOODS.length;i++){ if(MOODS[i].key===key) return MOODS[i]; }
+    return MOODS[0];
+  }
+  function rotationForId(id){
+    var n = (id * 37) % 11; // deterministic pseudo-random -5..5
+    return (n - 5) + "deg";
+  }
+  function revokeAllUrls(){
+    activeObjectUrls.forEach(function(u){ URL.revokeObjectURL(u); });
+    activeObjectUrls = [];
+  }
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, function(c){
+      return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];
+    });
+  }
+
+  /* ---------------- ONBOARDING ---------------- */
+  var nameInput = document.getElementById("nameInput");
+  var toStep2Btn = document.getElementById("toStep2");
+  var toAppBtn = document.getElementById("toApp");
+  var avatarGrid = document.getElementById("avatarGrid");
+
+  nameInput.addEventListener("input", function(){
+    toStep2Btn.disabled = nameInput.value.trim().length === 0;
+  });
+  nameInput.addEventListener("keydown", function(e){
+    if(e.key === "Enter" && !toStep2Btn.disabled) toStep2Btn.click();
+  });
+
+  toStep2Btn.addEventListener("click", function(){
+    tempName = nameInput.value.trim();
+    if(!tempName) return;
+    document.getElementById("step-name").classList.remove("active");
+    document.getElementById("step-avatar").classList.add("active");
+  });
+
+  AVATARS.forEach(function(emoji, idx){
+    var hue = (idx * 37) % 360;
+    var div = document.createElement("div");
+    div.className = "sticker";
+    div.textContent = emoji;
+    div.style.background = "linear-gradient(135deg, hsl(" + hue + ",65%,70%), hsl(" + ((hue+40)%360) + ",65%,55%))";
+    div.addEventListener("click", function(){
+      var prev = avatarGrid.querySelector(".sticker.selected");
+      if(prev) prev.classList.remove("selected");
+      div.classList.add("selected");
+      selectedAvatar = emoji;
+      toAppBtn.disabled = false;
+    });
+    avatarGrid.appendChild(div);
+  });
+
+  toAppBtn.addEventListener("click", function(){
+    if(!selectedAvatar) return;
+    var profile = {name: tempName, avatar: selectedAvatar};
+    try{ localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); }catch(e){}
+    enterApp(profile);
+  });
+
+  function enterApp(profile){
+    document.getElementById("onboarding").hidden = true;
+    document.getElementById("app").hidden = false;
+    document.getElementById("userAvatar").textContent = profile.avatar;
+    document.getElementById("userName").textContent = profile.name;
+    renderGallery();
+  }
+
+  /* ---------------- USER MENU ---------------- */
+  var userChip = document.getElementById("userChip");
+  var userMenu = document.getElementById("userMenu");
+  userChip.addEventListener("click", function(e){
+    userMenu.classList.toggle("open");
+    e.stopPropagation();
+  });
+  document.addEventListener("click", function(){ userMenu.classList.remove("open"); });
+  document.getElementById("switchProfileBtn").addEventListener("click", function(){
+    try{ localStorage.removeItem(PROFILE_KEY); }catch(e){}
+    location.reload();
+  });
+
+  /* ---------------- TABS + SEARCH ---------------- */
+  document.getElementById("tabs").addEventListener("click", function(e){
+    var btn = e.target.closest(".tab");
+    if(!btn) return;
+    document.querySelectorAll(".tab").forEach(function(t){ t.classList.remove("active"); });
+    btn.classList.add("active");
+    currentTab = btn.dataset.type;
+    renderGallery();
+  });
+  document.getElementById("searchInput").addEventListener("input", function(e){
+    searchQuery = e.target.value.trim().toLowerCase();
+    renderGallery();
+  });
+
+  /* ---------------- GALLERY RENDER ---------------- */
+  function renderGallery(){
+    getAllMedia().then(function(items){
+      revokeAllUrls();
+      var grid = document.getElementById("galleryGrid");
+      var empty = document.getElementById("emptyState");
+      grid.innerHTML = "";
+
+      var filtered = items.filter(function(it){
+        var typeOk = currentTab === "all" || it.type === currentTab;
+        var searchOk = !searchQuery || (it.owner || "").toLowerCase().indexOf(searchQuery) !== -1;
+        return typeOk && searchOk;
+      });
+      filtered.sort(function(a,b){ return b.addedAt - a.addedAt; });
+
+      if(filtered.length === 0){
+        empty.hidden = false;
+        return;
+      }
+      empty.hidden = true;
+
+      filtered.forEach(function(item){
+        grid.appendChild(buildCard(item));
+      });
+    });
+  }
+
+  function buildCard(item){
+    var url = URL.createObjectURL(item.blob);
+    activeObjectUrls.push(url);
+    var mood = moodByKey(item.mood);
+
+    var card = document.createElement("div");
+    card.className = "polaroid";
+    card.style.transform = "rotate(" + rotationForId(item.id) + ")";
+
+    var pin = document.createElement("div"); pin.className = "pin"; card.appendChild(pin);
+    var badge = document.createElement("div"); badge.className = "mood-badge"; badge.textContent = mood.emoji; card.appendChild(badge);
+
+    var frame = document.createElement("div"); frame.className = "frame";
+    if(item.type === "image"){
+      var img = document.createElement("img"); img.src = url; img.alt = item.owner;
+      frame.appendChild(img);
+    } else if(item.type === "video"){
+      var vid = document.createElement("video"); vid.src = url; vid.muted = true; vid.preload = "metadata";
+      frame.appendChild(vid);
+      var play = document.createElement("div"); play.className = "play-badge"; play.textContent = "▶"; frame.appendChild(play);
+    } else {
+      var face = document.createElement("div"); face.className = "audio-face"; face.textContent = "🎵";
+      frame.appendChild(face);
+    }
+    card.appendChild(frame);
+
+    var caption = document.createElement("div"); caption.className = "caption";
+    var who = document.createElement("div"); who.className = "who"; who.textContent = item.owner;
+    var actions = document.createElement("div"); actions.className = "actions";
+
+    var dlBtn = document.createElement("button"); dlBtn.className = "icon-btn download"; dlBtn.title = "Yuklab olish"; dlBtn.textContent = "⬇";
+    dlBtn.addEventListener("click", function(e){ e.stopPropagation(); downloadItem(item, url); });
+
+    var delBtn = document.createElement("button"); delBtn.className = "icon-btn delete"; delBtn.title = "O'chirish"; delBtn.textContent = "✕";
+    delBtn.addEventListener("click", function(e){
+      e.stopPropagation();
+      if(confirm("Bu xotirani o'chirmoqchimisiz?")){
+        deleteMediaItem(item.id).then(renderGallery);
+      }
+    });
+
+    actions.appendChild(dlBtn); actions.appendChild(delBtn);
+    caption.appendChild(who); caption.appendChild(actions);
+    card.appendChild(caption);
+
+    card.addEventListener("click", function(){ openLightbox(item, url); });
+
+    return card;
+  }
+
+  function downloadItem(item, url){
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = item.fileName || ("xotira-" + item.id);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  /* ---------------- LIGHTBOX ---------------- */
+  function openLightbox(item, url){
+    currentLightboxId = item.id;
+    var wrap = document.getElementById("lightboxMediaWrap");
+    wrap.innerHTML = "";
+    var el;
+    if(item.type === "image"){
+      el = document.createElement("img"); el.src = url; el.className = "lightbox-media";
+    } else if(item.type === "video"){
+      el = document.createElement("video"); el.src = url; el.className = "lightbox-media"; el.controls = true; el.autoplay = true;
+    } else {
+      el = document.createElement("audio"); el.src = url; el.controls = true; el.style.width = "100%";
+    }
+    wrap.appendChild(el);
+    document.getElementById("lightboxWho").textContent = item.owner;
+    document.getElementById("lightboxMood").textContent = moodByKey(item.mood).emoji + " " + moodByKey(item.mood).label;
+    document.getElementById("lightbox").hidden = false;
+
+    document.getElementById("lightboxDownload").onclick = function(){ downloadItem(item, url); };
+    document.getElementById("lightboxDelete").onclick = function(){
+      if(confirm("Bu xotirani o'chirmoqchimisiz?")){
+        deleteMediaItem(item.id).then(function(){
+          closeLightbox();
+          renderGallery();
+        });
+      }
+    };
+  }
+  function closeLightbox(){
+    document.getElementById("lightbox").hidden = true;
+    document.getElementById("lightboxMediaWrap").innerHTML = "";
+    currentLightboxId = null;
+  }
+  document.getElementById("lightboxClose").addEventListener("click", closeLightbox);
+  document.getElementById("lightbox").addEventListener("click", function(e){
+    if(e.target.id === "lightbox") closeLightbox();
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+      if(!document.getElementById("lightbox").hidden) closeLightbox();
+      if(!document.getElementById("uploadOverlay").hidden) closeUploadModal();
+    }
+  });
+
+  /* ---------------- UPLOAD MODAL ---------------- */
+  var uploadOverlay = document.getElementById("uploadOverlay");
+  var fileInput = document.getElementById("fileInput");
+  var fileDrop = document.getElementById("fileDrop");
+  var fileDropText = document.getElementById("fileDropText");
+  var ownerInput = document.getElementById("ownerInput");
+  var moodRow = document.getElementById("moodRow");
+  var confirmBtn = document.getElementById("confirmUpload");
+
+  MOODS.forEach(function(m){
+    var opt = document.createElement("div");
+    opt.className = "mood-opt";
+    opt.innerHTML = "<span>" + m.emoji + "</span><span>" + m.label + "</span>";
+    opt.addEventListener("click", function(){
+      document.querySelectorAll(".mood-opt").forEach(function(o){ o.classList.remove("selected"); });
+      opt.classList.add("selected");
+      selectedMood = m.key;
+      updateConfirmState();
+    });
+    moodRow.appendChild(opt);
+  });
+
+  document.getElementById("fabUpload").addEventListener("click", openUploadModal);
+  document.getElementById("cancelUpload").addEventListener("click", closeUploadModal);
+  uploadOverlay.addEventListener("click", function(e){ if(e.target === uploadOverlay) closeUploadModal(); });
+
+  function openUploadModal(){
+    pendingFiles = [];
+    selectedMood = null;
+    fileInput.value = "";
+    ownerInput.value = "";
+    fileDropText.textContent = "Fayl tanlash uchun bosing";
+    fileDrop.classList.remove("has-files");
+    document.querySelectorAll(".mood-opt").forEach(function(o){ o.classList.remove("selected"); });
+    populateOwnerNames();
+    updateConfirmState();
+    uploadOverlay.hidden = false;
+  }
+  function closeUploadModal(){ uploadOverlay.hidden = true; }
+
+  function populateOwnerNames(){
+    getAllMedia().then(function(items){
+      var names = Array.from(new Set(items.map(function(i){ return i.owner; }).filter(Boolean)));
+      var list = document.getElementById("ownerNames");
+      list.innerHTML = "";
+      names.forEach(function(n){
+        var opt = document.createElement("option"); opt.value = n; list.appendChild(opt);
+      });
+    });
+  }
+
+  fileInput.addEventListener("change", function(){
+    pendingFiles = Array.from(fileInput.files || []);
+    if(pendingFiles.length === 1){
+      fileDropText.textContent = pendingFiles[0].name;
+    } else if(pendingFiles.length > 1){
+      fileDropText.textContent = pendingFiles.length + " ta fayl tanlandi";
+    } else {
+      fileDropText.textContent = "Fayl tanlash uchun bosing";
+    }
+    fileDrop.classList.toggle("has-files", pendingFiles.length > 0);
+    updateConfirmState();
+  });
+  ownerInput.addEventListener("input", updateConfirmState);
+
+  function updateConfirmState(){
+    confirmBtn.disabled = !(pendingFiles.length > 0 && ownerInput.value.trim().length > 0 && selectedMood);
+  }
+
+  confirmBtn.addEventListener("click", function(){
+    var owner = ownerInput.value.trim();
+    if(!owner || !selectedMood || pendingFiles.length === 0) return;
+    var items = pendingFiles.map(function(file){
+      return {
+        type: typeFromMime(file.type),
+        blob: file,
+        fileName: file.name,
+        mimeType: file.type,
+        owner: owner,
+        mood: selectedMood,
+        addedAt: Date.now()
+      };
+    });
+    addMediaItems(items).then(function(){
+      closeUploadModal();
+      renderGallery();
+    });
+  });
+
+  /* ---------------- BOOT ---------------- */
+  (function boot(){
+    var saved = null;
+    try{ saved = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null"); }catch(e){ saved = null; }
+    if(saved && saved.name && saved.avatar){
+      enterApp(saved);
+    }
+  })();
+
+})();
+</script>
+</body>
+</html>
